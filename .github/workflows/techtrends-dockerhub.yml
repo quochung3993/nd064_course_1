@@ -30,4 +30,4 @@ jobs:
         with:
           context: ./project/techtrends/
           push: true
-          tags: techtrends:latest
+          tags: quochung3993/techtrends:latest
