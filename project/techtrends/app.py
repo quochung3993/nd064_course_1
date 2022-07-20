@@ -2,10 +2,16 @@ import sqlite3
 
 from flask import Flask, jsonify, json, render_template, request, url_for, redirect, flash
 from werkzeug.exceptions import abort
+import logging
+
+count = 0
+logging.basicConfig(level = logging.INFO)
 
 # Function to get a database connection.
 # This function connects to database with the name `database.db`
 def get_db_connection():
+    global count
+    count += 1
     connection = sqlite3.connect('database.db')
     connection.row_factory = sqlite3.Row
     return connection
@@ -36,14 +42,41 @@ def index():
 def post(post_id):
     post = get_post(post_id)
     if post is None:
+      logging.info('Post not found')
       return render_template('404.html'), 404
     else:
+      logging.info('Retrieve ' + post[2])
       return render_template('post.html', post=post)
 
 # Define the About Us page
 @app.route('/about')
 def about():
+    logging.info('Retrieve About us')
     return render_template('about.html')
+
+@app.route('/healthz')
+def healthz():
+    response = app.response_class(
+        response=json.dumps({"result": "OK - healthy"}),
+        status=200,
+        mimetype='application/json'
+    )
+    logging.info('Healthz request successful')
+    return response
+
+@app.route('/metrics')
+def metrics():
+    global count
+    connection = get_db_connection()
+    posts = connection.execute('SELECT * FROM posts').fetchall()
+    connection.close()
+    response = app.response_class(
+        response=json.dumps({"status": "success", "code": 0, "data": {"db_connection_count": count, "post_count": len(posts)}}),
+        status=200,
+        mimetype='application/json'
+    )
+    logging.info('Metrics request successful')
+    return response
 
 # Define the post creation functionality 
 @app.route('/create', methods=('GET', 'POST'))
@@ -60,6 +93,7 @@ def create():
                          (title, content))
             connection.commit()
             connection.close()
+            logging.info('Create ' + title)
 
             return redirect(url_for('index'))
 
