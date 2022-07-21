@@ -5,7 +5,10 @@ from werkzeug.exceptions import abort
 import logging
 
 count = 0
-logging.basicConfig(level = logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.DEBUG,
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 # Function to get a database connection.
 # This function connects to database with the name `database.db`
