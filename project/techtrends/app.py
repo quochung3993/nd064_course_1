@@ -2,13 +2,10 @@ import sqlite3
 
 from flask import Flask, jsonify, json, render_template, request, url_for, redirect, flash
 from werkzeug.exceptions import abort
+import os
 import logging
 
 count = 0
-logging.basicConfig(
-    format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.DEBUG,
-    datefmt='%Y-%m-%d %H:%M:%S')
 
 # Function to get a database connection.
 # This function connects to database with the name `database.db`
@@ -45,16 +42,16 @@ def index():
 def post(post_id):
     post = get_post(post_id)
     if post is None:
-      logging.error('Post not found')
+      app.logger.error('Post not found')
       return render_template('404.html'), 404
     else:
-      logging.info('Retrieve ' + post[2])
+      app.logger.info('Retrieve ' + post[2])
       return render_template('post.html', post=post)
 
 # Define the About Us page
 @app.route('/about')
 def about():
-    logging.info('Retrieve About us')
+    app.logger.info('Retrieve About us')
     return render_template('about.html')
 
 @app.route('/healthz')
@@ -64,7 +61,7 @@ def healthz():
         status=200,
         mimetype='application/json'
     )
-    logging.info('Healthz request successful')
+    app.logger.info('Healthz request successful')
     return response
 
 @app.route('/metrics')
@@ -78,7 +75,7 @@ def metrics():
         status=200,
         mimetype='application/json'
     )
-    logging.info('Metrics request successful')
+    app.logger.info('Metrics request successful')
     return response
 
 # Define the post creation functionality 
@@ -96,7 +93,7 @@ def create():
                          (title, content))
             connection.commit()
             connection.close()
-            logging.info('Create ' + title)
+            app.logger.info('Create ' + title)
 
             return redirect(url_for('index'))
 
@@ -104,4 +101,17 @@ def create():
 
 # start the application on port 3111
 if __name__ == "__main__":
+   LOG_LEVEL = os.getenv("LOG_LEVEL")
+
+   if (LOG_LEVEL is None or LOG_LEVEL == 'DEBUG'):
+    app.logger.setLevel(logging.DEBUG)
+   elif (LOG_LEVEL == 'INFO'):
+    app.logger.setLevel(logging.INFO)
+   elif (LOG_LEVEL == 'ERROR'):
+    app.logger.setLevel(logging.ERROR)
+   elif (LOG_LEVEL == 'WARNING'):
+    app.logger.setLevel(logging.WARNING)
+   else:
+    app.logger.setLevel(logging.DEBUG)
+
    app.run(host='0.0.0.0', port='3111')
